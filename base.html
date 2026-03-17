@@ -20,7 +20,7 @@
         #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9000; display: none; overflow-y: auto; }
         .player-wrapper { width: 100%; aspect-ratio: 16/9; background: #111; position: relative; }
         #player-target { width: 100%; height: 100%; }
-        .gesture-area { position: absolute; top: 0; width: 30%; height: 80%; z-index: 9010; }
+        .gesture-area { position: absolute; top: 0; width: 40%; height: 60%; z-index: 9010; }
         #left-gesture { left: 0; }
         #right-gesture { right: 0; }
         .skip-anim { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.25); border-radius: 50%; width: 60px; height: 60px; display: none; align-items: center; justify-content: center; font-size: 16px; pointer-events: none; }
@@ -112,7 +112,7 @@
             if (player) player.destroy();
             player = new YT.Player('player-target', {
                 height: '100%', width: '100%', videoId: v.videoId,
-                playerVars: { 'autoplay': 1, 'controls': 1, 'rel': 0, 'modestbranding': 0 },
+                playerVars: { 'autoplay': 1, 'controls': 1, 'rel': 0, 'modestbranding': 1 },
                 events: { 'onReady': (e) => { setupGst(); e.target.playVideo(); } }
             });
             render([...currentData].sort(() => 0.5 - Math.random()).slice(0, 6), 'related-feed');
