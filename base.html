@@ -20,10 +20,10 @@
         #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9500; display: none; overflow-y: auto; }
         .player-wrapper { width: 100%; aspect-ratio: 16/9; background: #111; position: relative; }
         #player-target { width: 100%; height: 100%; }
-        .gesture-area { position: absolute; top: 0; width: 35%; height: 70%; z-index: 9510; }
+        .gesture-area { position: absolute; top: 0; width: 30%; height: 100%; z-index: 9510; display: flex; align-items: center; justify-content: center; }
         #left-gesture { left: 0; }
         #right-gesture { right: 0; }
-        .skip-anim { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.25); border-radius: 50%; width: 60px; height: 60px; display: none; align-items: center; justify-content: center; font-size: 16px; pointer-events: none; }
+        .skip-anim { background: rgba(255,255,255,0.2); border-radius: 50%; width: 50px; height: 50px; display: none; align-items: center; justify-content: center; font-size: 14px; pointer-events: none; flex-direction: column; }
         #ios-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
         .ios-alert { background: rgba(35, 35, 35, 0.9); width: 280px; border-radius: 20px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; }
         .info-box { background: rgba(255,255,255,0.05); border-radius: 12px; margin: 15px; padding: 10px; text-align: left; }
@@ -48,8 +48,8 @@
         </div>
         <div class="player-wrapper">
             <div id="player-target"></div>
-            <div class="gesture-area" id="left-gesture"><div class="skip-anim" id="l-anim"><i class="fa-solid fa-backward"></i></div></div>
-            <div class="gesture-area" id="right-gesture"><div class="skip-anim" id="r-anim"><i class="fa-solid fa-forward"></i></div></div>
+            <div class="gesture-area" id="left-gesture"><div class="skip-anim" id="l-anim"><i class="fa-solid fa-backward"></i><span class="text-[8px]">10s</span></div></div>
+            <div class="gesture-area" id="right-gesture"><div class="skip-anim" id="r-anim"><i class="fa-solid fa-forward"></i><span class="text-[8px]">10s</span></div></div>
         </div>
         <div class="p-5">
             <h3 id="playing-title" class="font-bold text-lg line-clamp-2"></h3>
@@ -82,10 +82,8 @@
     <script>
         const nodes = ['https://iv.melmac.space', 'https://invidious.lunar.icu'];
         let player, currentData = [], lastTap = 0;
-
         window.onpopstate = () => { if (document.getElementById('video-player-layer').style.display === 'block') closePlayerLogic(); };
         function handleBack() { window.history.back(); }
-
         function showProfile() {
             document.getElementById('modal-content').innerHTML = `
                 <div class="ios-alert">
@@ -99,9 +97,7 @@
                 </div>`;
             document.getElementById('ios-modal-overlay').style.display = 'flex';
         }
-
         function closeModal() { document.getElementById('ios-modal-overlay').style.display = 'none'; }
-
         async function startSearch(q) {
             if(!q) return;
             document.getElementById('section-title').innerText = `Hasil: ${q}`;
@@ -111,24 +107,19 @@
                 const data = await r.json();
                 render(data);
                 document.activeElement.blur();
-            } catch (e) {
-                document.getElementById('feed').innerHTML = '<p class="text-center py-20">Gagal mencari, Tuan.</p>';
-            }
+            } catch (e) { document.getElementById('feed').innerHTML = '<p class="text-center py-20">Gagal, Tuan.</p>'; }
         }
-
         function saveHistory(v) {
             let h = JSON.parse(localStorage.getItem('hm_history') || '[]');
             h = [v, ...h.filter(x => x.videoId !== v.videoId)].slice(0, 30);
             localStorage.setItem('hm_history', JSON.stringify(h));
         }
-
         function showHistory() {
             const h = JSON.parse(localStorage.getItem('hm_history') || '[]');
             document.getElementById('section-title').innerText = "Riwayat Tontonan";
             updateTab(1);
             render(h);
         }
-
         async function playVideo(v) {
             saveHistory(v);
             document.getElementById('playing-title').innerText = v.title;
@@ -143,31 +134,28 @@
             });
             render([...currentData].sort(() => 0.5 - Math.random()).slice(0, 6), 'related-feed');
         }
-
         function setupGst() {
             document.getElementById('left-gesture').onclick = (e) => handleTap(e, -10);
             document.getElementById('right-gesture').onclick = (e) => handleTap(e, 10);
         }
-
         function handleTap(e, sec) {
             let now = new Date().getTime();
             if (now - lastTap < 300) {
                 player.seekTo(player.getCurrentTime() + sec, true);
                 let anim = sec > 0 ? 'r-anim' : 'l-anim';
-                document.getElementById(anim).style.display = 'flex';
-                setTimeout(() => document.getElementById(anim).style.display = 'none', 600);
+                let el = document.getElementById(anim);
+                el.style.display = 'flex';
+                setTimeout(() => el.style.display = 'none', 600);
             }
             lastTap = now;
         }
-
         function closePlayerLogic() {
             document.getElementById('video-player-layer').style.display = 'none';
             if (player) player.stopVideo();
         }
-
         function render(items, targetId = 'feed') {
             const target = document.getElementById(targetId);
-            target.innerHTML = items.length ? '' : '<p class="text-center opacity-30 py-20">Kosong, Tuan.</p>';
+            target.innerHTML = items.length ? '' : '<p class="text-center opacity-30 py-20">Kosong.</p>';
             items.forEach(v => {
                 if(!v.videoId) return;
                 const card = document.createElement('div');
@@ -177,7 +165,6 @@
                 target.appendChild(card);
             });
         }
-
         async function loadTrending() {
             document.getElementById('section-title').innerText = "Untuk Tuan";
             updateTab(0);
@@ -187,12 +174,10 @@
                 render(currentData);
             } catch (e) {}
         }
-
         function updateTab(i) {
             document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-item')[i].classList.add('active');
         }
-
         window.onload = loadTrending;
     </script>
 </body>
