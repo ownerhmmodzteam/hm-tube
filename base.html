@@ -17,14 +17,14 @@
         .avatar-donut { width: 38px; height: 38px; border-radius: 50%; background: #2b2c30; position: relative; cursor: pointer; }
         .avatar-donut::before { content: ''; width: 12px; height: 12px; background: #54555a; border-radius: 50%; position: absolute; top: 8px; left: 13px; }
         .avatar-donut::after { content: ''; width: 22px; height: 10px; background: #54555a; border-radius: 10px 10px 0 0; position: absolute; bottom: 6px; left: 8px; }
-        #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9000; display: none; overflow-y: auto; padding-top: env(safe-area-inset-top); }
+        #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9000; display: none; overflow-y: auto; }
         .player-box { width: 100%; aspect-ratio: 16/9; background: #111; position: relative; }
         #player-target { width: 100%; height: 100%; border: none; }
-        .touch-overlay { position: absolute; inset: 0; display: flex; z-index: 9010; pointer-events: none; }
-        .touch-side { flex: 1; height: 100%; position: relative; pointer-events: auto; }
-        .skip-anim { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.2); border-radius: 50%; width: 70px; height: 70px; display: none; align-items: center; justify-content: center; font-size: 18px; }
+        .touch-container { position: absolute; top: 0; left: 0; width: 100%; height: 80%; display: flex; z-index: 9010; }
+        .touch-zone { flex: 1; height: 100%; position: relative; }
+        .skip-anim { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.2); border-radius: 50%; width: 65px; height: 65px; display: none; align-items: center; justify-content: center; font-size: 16px; pointer-events: none; }
         #ios-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
-        .ios-alert { background: rgba(35, 35, 35, 0.8); width: 280px; border-radius: 20px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; }
+        .ios-alert { background: rgba(35, 35, 35, 0.85); width: 280px; border-radius: 20px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; }
         .info-box { background: rgba(255,255,255,0.05); border-radius: 12px; margin: 15px; padding: 10px; text-align: left; }
         .info-item { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
         .info-value { color: var(--accent); font-weight: 600; }
@@ -46,20 +46,14 @@
         </div>
         <div class="player-box">
             <div id="player-target"></div>
-            <div class="touch-overlay">
-                <div class="touch-side" id="left-touch"><div class="skip-anim" id="left-anim"><i class="fa-solid fa-backward"></i></div></div>
-                <div class="touch-side" id="right-touch"><div class="skip-anim" id="right-anim"><i class="fa-solid fa-forward"></i></div></div>
+            <div class="touch-container">
+                <div class="touch-zone" id="ltz"><div class="skip-anim" id="lanim"><i class="fa-solid fa-backward"></i></div></div>
+                <div class="touch-zone" id="rtz"><div class="skip-anim" id="ranim"><i class="fa-solid fa-forward"></i></div></div>
             </div>
         </div>
         <div class="p-5">
             <h3 id="playing-title" class="font-bold text-lg line-clamp-2"></h3>
-            <p id="playing-author" class="text-sm opacity-50 mb-4"></p>
-            <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-                <button onclick="changeSpeed(0.5)" class="bg-white/10 px-3 py-1 rounded-full text-xs">0.5x</button>
-                <button onclick="changeSpeed(1)" class="bg-purple-500 px-3 py-1 rounded-full text-xs">Normal</button>
-                <button onclick="changeSpeed(1.5)" class="bg-white/10 px-3 py-1 rounded-full text-xs">1.5x</button>
-                <button onclick="changeSpeed(2)" class="bg-white/10 px-3 py-1 rounded-full text-xs">2x</button>
-            </div>
+            <p id="playing-author" class="text-sm opacity-50 mb-6"></p>
             <hr class="border-white/10 mb-5">
             <h4 class="text-sm font-bold text-purple-400 mb-4">Rekomendasi</h4>
             <div id="related-feed"></div>
@@ -120,26 +114,24 @@
             player = new YT.Player('player-target', {
                 height: '100%', width: '100%', videoId: v.videoId,
                 playerVars: { 
-                    'autoplay': 1, 'controls': 1, 'modestbranding': 1, 
-                    'rel': 0, 'cc_load_policy': 1, 'iv_load_policy': 3,
-                    'vq': 'hd1080'
+                    'autoplay': 1, 'controls': 1, 'rel': 0, 'showinfo': 1,
+                    'cc_load_policy': 1, 'iv_load_policy': 1, 'origin': location.origin
                 },
-                events: { 'onReady': (e) => { setupTouchControls(); e.target.playVideo(); } }
+                events: { 'onReady': (e) => { setupTaps(); e.target.playVideo(); } }
             });
             render([...currentData].sort(() => 0.5 - Math.random()).slice(0, 6), 'related-feed');
             window.history.pushState({playing: true}, "");
         }
-        function changeSpeed(val) { if(player && player.setPlaybackRate) player.setPlaybackRate(val); }
-        function setupTouchControls() {
-            document.getElementById('left-touch').onclick = (e) => handleTap(e, -10);
-            document.getElementById('right-touch').onclick = (e) => handleTap(e, 10);
+        function setupTaps() {
+            document.getElementById('ltz').onclick = (e) => handleTap(e, -10);
+            document.getElementById('rtz').onclick = (e) => handleTap(e, 10);
         }
         function handleTap(e, sec) {
             let now = new Date().getTime();
             if (now - lastTap < 300) {
                 let cur = player.getCurrentTime();
                 player.seekTo(cur + sec, true);
-                let anim = sec > 0 ? 'right-anim' : 'left-anim';
+                let anim = sec > 0 ? 'ranim' : 'lanim';
                 document.getElementById(anim).style.display = 'flex';
                 setTimeout(() => document.getElementById(anim).style.display = 'none', 500);
             }
