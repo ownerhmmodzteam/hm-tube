@@ -42,6 +42,7 @@
         .tab-item.active { color: var(--accent); }
         .set-btn { background: rgba(255,255,255,0.08); padding: 6px 12px; border-radius: 10px; font-size: 11px; border: 0.5px solid rgba(255,255,255,0.15); transition: 0.2s; }
         .set-btn.active { background: var(--accent); border-color: transparent; font-weight: bold; }
+        .ls-btn { position: absolute; right: 15px; bottom: 15px; z-index: 9600; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; border: 0.5px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -54,11 +55,11 @@
             <div id="player-target"></div>
             <div class="gesture-area" id="left-gesture"><div class="skip-anim" id="l-anim"><i class="fa-solid fa-backward"></i><span class="text-[8px]">10s</span></div></div>
             <div class="gesture-area" id="right-gesture"><div class="skip-anim" id="r-anim"><i class="fa-solid fa-forward"></i><span class="text-[8px]">10s</span></div></div>
+            <button class="ls-btn" onclick="toggleLS()"><i class="fa-solid fa-expand"></i></button>
         </div>
         <div class="p-5" id="video-details">
             <h3 id="playing-title" class="font-bold text-lg line-clamp-2 mb-2"></h3>
             <p id="playing-author" class="text-xs opacity-50 mb-5"></p>
-            
             <p class="text-[10px] uppercase tracking-widest opacity-40 mb-2">Kualitas Video</p>
             <div class="flex flex-wrap gap-2 mb-5" id="quality-controls">
                 <button class="set-btn" onclick="setQuality('small')">360p</button>
@@ -66,7 +67,6 @@
                 <button class="set-btn" onclick="setQuality('hd720')">720p</button>
                 <button class="set-btn active" onclick="setQuality('hd1080')">1080p</button>
             </div>
-
             <p class="text-[10px] uppercase tracking-widest opacity-40 mb-2">Kecepatan Putar</p>
             <div class="flex gap-2 mb-6">
                 <button class="set-btn speed-btn" onclick="setSpeed(0.5)">0.5x</button>
@@ -74,7 +74,6 @@
                 <button class="set-btn speed-btn" onclick="setSpeed(1.5)">1.5x</button>
                 <button class="set-btn speed-btn" onclick="setSpeed(2)">2x</button>
             </div>
-
             <hr class="border-white/10 mb-5">
             <h4 class="text-sm font-bold text-purple-400 mb-4">Rekomendasi</h4>
             <div id="related-feed"></div>
@@ -83,10 +82,7 @@
     <nav class="ios-nav">
         <div class="hm-logo-text" onclick="loadTrending()">HM <span>TUBE</span></div>
         <div class="search-pill">
-            <input type="text" id="query" placeholder="Cari video..." 
-                onfocus="document.querySelector('.tab-bar').classList.add('hide')" 
-                onblur="setTimeout(()=>document.querySelector('.tab-bar').classList.remove('hide'), 300)"
-                onkeyup="if(event.key==='Enter') startSearch(this.value)">
+            <input type="text" id="query" placeholder="Cari video..." onfocus="document.querySelector('.tab-bar').classList.add('hide')" onblur="setTimeout(()=>document.querySelector('.tab-bar').classList.remove('hide'), 300)" onkeyup="if(event.key==='Enter') startSearch(this.value)">
         </div>
         <div class="avatar-donut" onclick="showProfile()"></div>
     </nav>
@@ -102,20 +98,17 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         const nodes = ['https://iv.melmac.space', 'https://invidious.lunar.icu'];
-        let player, currentData = [], lastTap = 0;
+        let player, currentData = [], lastTap = 0, isLS = false;
         window.onpopstate = () => { if (document.getElementById('video-player-layer').style.display === 'block') closePlayerLogic(); };
         function handleBack() { window.history.back(); }
+        function toggleLS() {
+            isLS = !isLS;
+            if (window.AndroidControl) {
+                window.AndroidControl.setLandscape(isLS);
+            }
+        }
         function showProfile() {
-            document.getElementById('modal-content').innerHTML = `
-                <div class="ios-alert">
-                    <div class="p-5 font-bold">Informasi Sistem</div>
-                    <div class="info-box">
-                        <div class="info-item"><span>Nomor Build</span><span class="info-value">V1.0.0</span></div>
-                        <div class="info-item"><span>Owner</span><span class="info-value">Muhammad Raihan Musalah</span></div>
-                        <div class="info-item" style="border:none"><span>Teamed</span><span class="info-value">HM MODZ TEAM</span></div>
-                    </div>
-                    <button class="modal-btn" onclick="closeModal()">Tutup</button>
-                </div>`;
+            document.getElementById('modal-content').innerHTML = `<div class="ios-alert"><div class="p-5 font-bold">Informasi Sistem</div><div class="info-box"><div class="info-item"><span>Nomor Build</span><span class="info-value">V1.0.0</span></div><div class="info-item"><span>Owner</span><span class="info-value">Muhammad Raihan Musalah</span></div><div class="info-item" style="border:none"><span>Teamed</span><span class="info-value">HM MODZ TEAM</span></div></div><button class="modal-btn" onclick="closeModal()">Tutup</button></div>`;
             document.getElementById('ios-modal-overlay').style.display = 'flex';
         }
         function closeModal() { document.getElementById('ios-modal-overlay').style.display = 'none'; }
@@ -185,6 +178,8 @@
             lastTap = now;
         }
         function closePlayerLogic() {
+            isLS = false;
+            if (window.AndroidControl) window.AndroidControl.setLandscape(false);
             document.getElementById('video-player-layer').style.display = 'none';
             if (player) player.stopVideo();
         }
@@ -216,6 +211,7 @@
         window.onload = loadTrending;
         window.addEventListener('resize', () => {
             const isLandscape = window.innerWidth > window.innerHeight;
+            isLS = isLandscape;
             document.getElementById('back-btn').style.display = isLandscape ? 'none' : 'flex';
             document.getElementById('video-details').style.display = isLandscape ? 'none' : 'block';
         });
