@@ -10,17 +10,17 @@
         :root { --bg: #000; --accent: #a855f7; --ios-glass: rgba(18, 18, 18, 0.85); }
         body { background: var(--bg); color: white; font-family: -apple-system, system-ui, sans-serif; margin: 0; user-select: none; overflow-x: hidden; }
         .ios-nav { position: sticky; top: 0; background: var(--ios-glass); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 12px 20px; z-index: 9999; border-bottom: 0.5px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; }
-        .hm-logo-text { font-size: 20px; font-weight: 900; font-style: italic; color: #fff; }
+        .hm-logo-text { font-size: 20px; font-weight: 900; font-style: italic; color: #fff; cursor: pointer; }
         .hm-logo-text span { color: var(--accent); }
         .search-pill { background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px 16px; flex: 1; margin: 0 15px; display: flex; align-items: center; }
         .search-pill input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 15px; }
         .avatar-donut { width: 38px; height: 38px; border-radius: 50%; background: #2b2c30; position: relative; cursor: pointer; }
         .avatar-donut::before { content: ''; width: 12px; height: 12px; background: #54555a; border-radius: 50%; position: absolute; top: 8px; left: 13px; }
         .avatar-donut::after { content: ''; width: 22px; height: 10px; background: #54555a; border-radius: 10px 10px 0 0; position: absolute; bottom: 6px; left: 8px; }
-        #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9000; display: none; overflow-y: auto; }
+        #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9500; display: none; overflow-y: auto; }
         .player-wrapper { width: 100%; aspect-ratio: 16/9; background: #111; position: relative; }
         #player-target { width: 100%; height: 100%; }
-        .gesture-area { position: absolute; top: 0; width: 40%; height: 60%; z-index: 9010; }
+        .gesture-area { position: absolute; top: 0; width: 35%; height: 70%; z-index: 9510; }
         #left-gesture { left: 0; }
         #right-gesture { right: 0; }
         .skip-anim { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.25); border-radius: 50%; width: 60px; height: 60px; display: none; align-items: center; justify-content: center; font-size: 16px; pointer-events: none; }
@@ -33,7 +33,8 @@
         .v-card { margin-bottom: 24px; padding: 0 10px; cursor: pointer; }
         .v-thumb { width: 100%; aspect-ratio: 16/9; border-radius: 18px; overflow: hidden; background: #111; }
         .v-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--ios-glass); backdrop-filter: blur(30px); display: flex; justify-content: space-around; padding: 12px 0 32px 0; border-top: 0.5px solid rgba(255,255,255,0.1); z-index: 8000; }
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--ios-glass); backdrop-filter: blur(30px); display: flex; justify-content: space-around; padding: 12px 0 32px 0; border-top: 0.5px solid rgba(255,255,255,0.1); z-index: 8000; transition: transform 0.3s ease; }
+        .tab-bar.hide { transform: translateY(100%); }
         .tab-item { color: #8e8e93; text-align: center; font-size: 10px; }
         .tab-item i { font-size: 20px; display: block; margin-bottom: 2px; }
         .tab-item.active { color: var(--accent); }
@@ -42,7 +43,7 @@
 <body>
     <div id="ios-modal-overlay"><div id="modal-content"></div></div>
     <div id="video-player-layer">
-        <div class="p-4 flex items-center gap-3" onclick="closePlayer()">
+        <div class="p-4 flex items-center gap-3" onclick="handleBack()">
             <i class="fa-solid fa-chevron-left"></i> <span>Kembali</span>
         </div>
         <div class="player-wrapper">
@@ -61,7 +62,10 @@
     <nav class="ios-nav">
         <div class="hm-logo-text" onclick="loadTrending()">HM <span>TUBE</span></div>
         <div class="search-pill">
-            <input type="text" id="query" placeholder="Cari video..." onkeyup="if(event.key==='Enter') search()">
+            <input type="text" id="query" placeholder="Cari video..." 
+                onfocus="document.querySelector('.tab-bar').classList.add('hide')" 
+                onblur="setTimeout(()=>document.querySelector('.tab-bar').classList.remove('hide'), 300)"
+                onkeyup="if(event.key==='Enter') startSearch(this.value)">
         </div>
         <div class="avatar-donut" onclick="showProfile()"></div>
     </nav>
@@ -78,6 +82,10 @@
     <script>
         const nodes = ['https://iv.melmac.space', 'https://invidious.lunar.icu'];
         let player, currentData = [], lastTap = 0;
+
+        window.onpopstate = () => { if (document.getElementById('video-player-layer').style.display === 'block') closePlayerLogic(); };
+        function handleBack() { window.history.back(); }
+
         function showProfile() {
             document.getElementById('modal-content').innerHTML = `
                 <div class="ios-alert">
@@ -91,24 +99,42 @@
                 </div>`;
             document.getElementById('ios-modal-overlay').style.display = 'flex';
         }
+
         function closeModal() { document.getElementById('ios-modal-overlay').style.display = 'none'; }
+
+        async function startSearch(q) {
+            if(!q) return;
+            document.getElementById('section-title').innerText = `Hasil: ${q}`;
+            document.getElementById('feed').innerHTML = '<p class="text-center py-20 opacity-50">Mencari...</p>';
+            try {
+                const r = await fetch(`${nodes[0]}/api/v1/search?q=${encodeURIComponent(q)}`);
+                const data = await r.json();
+                render(data);
+                document.activeElement.blur();
+            } catch (e) {
+                document.getElementById('feed').innerHTML = '<p class="text-center py-20">Gagal mencari, Tuan.</p>';
+            }
+        }
+
         function saveHistory(v) {
             let h = JSON.parse(localStorage.getItem('hm_history') || '[]');
             h = [v, ...h.filter(x => x.videoId !== v.videoId)].slice(0, 30);
             localStorage.setItem('hm_history', JSON.stringify(h));
         }
+
         function showHistory() {
             const h = JSON.parse(localStorage.getItem('hm_history') || '[]');
             document.getElementById('section-title').innerText = "Riwayat Tontonan";
             updateTab(1);
             render(h);
         }
-        function onYouTubeIframeAPIReady() {}
+
         async function playVideo(v) {
             saveHistory(v);
             document.getElementById('playing-title').innerText = v.title;
             document.getElementById('playing-author').innerText = v.author;
             document.getElementById('video-player-layer').style.display = 'block';
+            window.history.pushState({playing: true}, "");
             if (player) player.destroy();
             player = new YT.Player('player-target', {
                 height: '100%', width: '100%', videoId: v.videoId,
@@ -116,12 +142,13 @@
                 events: { 'onReady': (e) => { setupGst(); e.target.playVideo(); } }
             });
             render([...currentData].sort(() => 0.5 - Math.random()).slice(0, 6), 'related-feed');
-            window.history.pushState({playing: true}, "");
         }
+
         function setupGst() {
             document.getElementById('left-gesture').onclick = (e) => handleTap(e, -10);
             document.getElementById('right-gesture').onclick = (e) => handleTap(e, 10);
         }
+
         function handleTap(e, sec) {
             let now = new Date().getTime();
             if (now - lastTap < 300) {
@@ -132,15 +159,17 @@
             }
             lastTap = now;
         }
-        function closePlayer() {
+
+        function closePlayerLogic() {
             document.getElementById('video-player-layer').style.display = 'none';
             if (player) player.stopVideo();
-            if(window.history.state?.playing) window.history.back();
         }
+
         function render(items, targetId = 'feed') {
             const target = document.getElementById(targetId);
             target.innerHTML = items.length ? '' : '<p class="text-center opacity-30 py-20">Kosong, Tuan.</p>';
             items.forEach(v => {
+                if(!v.videoId) return;
                 const card = document.createElement('div');
                 card.className = 'v-card';
                 card.onclick = () => playVideo(v);
@@ -148,17 +177,22 @@
                 target.appendChild(card);
             });
         }
+
         async function loadTrending() {
             document.getElementById('section-title').innerText = "Untuk Tuan";
             updateTab(0);
-            const r = await fetch(`${nodes[0]}/api/v1/trending?region=ID`);
-            currentData = await r.json();
-            render(currentData);
+            try {
+                const r = await fetch(`${nodes[0]}/api/v1/trending?region=ID`);
+                currentData = await r.json();
+                render(currentData);
+            } catch (e) {}
         }
+
         function updateTab(i) {
             document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-item')[i].classList.add('active');
         }
+
         window.onload = loadTrending;
     </script>
 </body>
