@@ -20,10 +20,10 @@
         #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9500; display: none; overflow-y: auto; }
         .player-wrapper { width: 100%; aspect-ratio: 16/9; background: #111; position: relative; }
         #player-target { width: 100%; height: 100%; }
-        .gesture-area { position: absolute; top: 0; width: 30%; height: 100%; z-index: 9510; display: flex; align-items: center; justify-content: center; }
+        .gesture-area { position: absolute; top: 0; width: 35%; height: 100%; z-index: 9510; display: flex; align-items: center; justify-content: center; }
         #left-gesture { left: 0; }
         #right-gesture { right: 0; }
-        .skip-anim { background: rgba(255,255,255,0.2); border-radius: 50%; width: 50px; height: 50px; display: none; align-items: center; justify-content: center; font-size: 14px; pointer-events: none; flex-direction: column; }
+        .skip-anim { background: rgba(255,255,255,0.25); border-radius: 50%; width: 45px; height: 45px; display: none; align-items: center; justify-content: center; font-size: 12px; pointer-events: none; flex-direction: column; }
         #ios-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
         .ios-alert { background: rgba(35, 35, 35, 0.9); width: 280px; border-radius: 20px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; }
         .info-box { background: rgba(255,255,255,0.05); border-radius: 12px; margin: 15px; padding: 10px; text-align: left; }
@@ -38,6 +38,8 @@
         .tab-item { color: #8e8e93; text-align: center; font-size: 10px; }
         .tab-item i { font-size: 20px; display: block; margin-bottom: 2px; }
         .tab-item.active { color: var(--accent); }
+        .speed-btn { background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 10px; font-size: 12px; border: 0.5px solid rgba(255,255,255,0.2); }
+        .speed-btn.active { background: var(--accent); border-color: transparent; }
     </style>
 </head>
 <body>
@@ -52,8 +54,14 @@
             <div class="gesture-area" id="right-gesture"><div class="skip-anim" id="r-anim"><i class="fa-solid fa-forward"></i><span class="text-[8px]">10s</span></div></div>
         </div>
         <div class="p-5">
-            <h3 id="playing-title" class="font-bold text-lg line-clamp-2"></h3>
-            <p id="playing-author" class="text-sm opacity-50 mb-6"></p>
+            <h3 id="playing-title" class="font-bold text-lg line-clamp-2 mb-2"></h3>
+            <p id="playing-author" class="text-xs opacity-50 mb-5"></p>
+            <div class="flex gap-2 mb-6" id="speed-controls">
+                <button class="speed-btn" onclick="setSpeed(0.5)">0.5x</button>
+                <button class="speed-btn active" onclick="setSpeed(1)">Normal</button>
+                <button class="speed-btn" onclick="setSpeed(1.5)">1.5x</button>
+                <button class="speed-btn" onclick="setSpeed(2)">2x</button>
+            </div>
             <hr class="border-white/10 mb-5">
             <h4 class="text-sm font-bold text-purple-400 mb-4">Rekomendasi</h4>
             <div id="related-feed"></div>
@@ -108,6 +116,13 @@
                 render(data);
                 document.activeElement.blur();
             } catch (e) { document.getElementById('feed').innerHTML = '<p class="text-center py-20">Gagal, Tuan.</p>'; }
+        }
+        function setSpeed(s) {
+            if(player && player.setPlaybackRate) {
+                player.setPlaybackRate(s);
+                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active');
+            }
         }
         function saveHistory(v) {
             let h = JSON.parse(localStorage.getItem('hm_history') || '[]');
