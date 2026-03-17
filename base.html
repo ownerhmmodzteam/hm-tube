@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HM TUBE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg: #000; --accent: #ff0000; }
+        body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; overflow-x: hidden; }
+        .header { padding: 15px 20px; display: flex; align-items: center; position: sticky; top: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 50; border-bottom: 1px solid #1a1a1a; }
+        .search-area { background: #1a1a1a; border-radius: 12px; padding: 8px 15px; display: flex; align-items: center; flex: 1; margin: 0 15px; border: 1px solid #222; }
+        .search-area input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 14px; }
+        .player-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden; z-index: 100; border-bottom: 1px solid #1a1a1a; }
+        iframe { width: 100%; height: 100%; border: none; transform: scale(1.03); }
+        .logo-patch { position: absolute; bottom: 8px; right: 8px; width: 90px; height: 35px; background: black; pointer-events: auto; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 9px; font-weight: bold; color: #555; border: 1px solid #222; z-index: 110; }
+        
+        #hm-dashboard { padding: 30px 20px; display: block; }
+        .dash-card { background: linear-gradient(145deg, #0a0a0a, #111); border: 1px solid #1a1a1a; border-radius: 20px; padding: 20px; margin-bottom: 15px; }
+        .status-dot { width: 8px; height: 8px; background: #00ff00; border-radius: 50%; box-shadow: 0 0 10px #00ff00; }
+        
+        .recommendation-list { padding: 20px; display: none; gap: 15px; }
+        .v-card { display: flex; gap: 12px; background: #111; border-radius: 12px; overflow: hidden; border: 1px solid #1a1a1a; cursor: pointer; }
+        .v-thumb { width: 130px; aspect-ratio: 16/9; flex-shrink: 0; background: #222; }
+        .v-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .v-title { font-size: 13px; font-weight: 600; line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+
+        @media (orientation: landscape) { .header, #hm-dashboard, .recommendation-list { display: none; } .player-box { height: 100vh; aspect-ratio: auto; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-play text-white text-xs"></i></div>
+        <div class="search-area">
+            <input type="text" id="query" placeholder="Cari di HM TV..." onkeyup="if(event.key==='Enter') startSearch()">
+            <i class="fa-solid fa-magnifying-glass text-gray-500 text-xs" onclick="startSearch()"></i>
+        </div>
+    </div>
+
+    <div class="player-box">
+        <div id="yt-frame" class="w-full h-full flex items-center justify-center text-zinc-800 text-[10px] uppercase tracking-widest">Waiting for Command...</div>
+        <div class="logo-patch">HM MODZ TEAM</div>
+    </div>
+
+    <div id="hm-dashboard">
+        <div class="dash-card flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">System Status</p>
+                <h2 class="text-sm font-bold">HM TUBE</h2>
+            </div>
+            <div class="status-dot"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="dash-card">
+                <i class="fa-solid fa-bolt text-yellow-500 mb-2"></i>
+                <p class="text-[10px] text-zinc-500">Stability</p>
+                <p class="text-xs font-bold">99.9%</p>
+            </div>
+            <div class="dash-card">
+                <i class="fa-solid fa-shield-halved text-blue-500 mb-2"></i>
+                <p class="text-[10px] text-zinc-500">Apikey/Server</p>
+                <p class="text-xs font-bold">Online</p>
+            </div>
+        </div>
+
+        <div class="mt-4 opacity-20 text-center">
+            <p class="text-[9px] uppercase tracking-[4px]">HM MODZ TEAM • 2026</p>
+        </div>
+    </div>
+
+    <div class="recommendation-list" id="rec-list"></div>
+
+    <script>
+        const recList = document.getElementById('rec-list');
+        const dash = document.getElementById('hm-dashboard');
+        const nodes = ['https://inv.tux.rs/api/v1', 'https://invidious.lunar.icu/api/v1', 'https://yewtu.be/api/v1'];
+
+        async function apiReq(p) {
+            for (let n of nodes) {
+                try { const r = await fetch(n + p); if (r.ok) return await r.json(); } catch (e) {}
+            }
+            return null;
+        }
+
+        function play(id) {
+            dash.style.display = 'none';
+            document.getElementById('yt-frame').innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&controls=1&modestbranding=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            loadRel(id);
+        }
+
+        async function startSearch() {
+            const q = document.getElementById('query').value;
+            if(!q) return;
+            dash.style.display = 'none';
+            recList.style.display = 'grid';
+            recList.innerHTML = '<div class="text-center p-10 text-xs text-zinc-500">Loading Data...</div>';
+            const d = await apiReq(`/search?q=${encodeURIComponent(q)}&type=video`);
+            d ? render(d) : (recList.innerHTML = '<p class="text-center p-10 text-zinc-600">Server sibuk Tuan.</p>');
+        }
+
+        function render(items) {
+            recList.innerHTML = '<h2 class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Rekomendasi</h2>';
+            items.forEach(v => {
+                const div = document.createElement('div');
+                div.className = 'v-card';
+                div.onclick = () => { play(v.videoId); window.scrollTo({top:0, behavior:'smooth'}); };
+                const t = v.videoThumbnails ? v.videoThumbnails[0].url : `https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`;
+                div.innerHTML = `<div class="v-thumb"><img src="${t}"></div><div class="v-meta"><h3 class="v-title">${v.title}</h3></div>`;
+                recList.appendChild(div);
+            });
+        }
+
+        async function loadRel(id) {
+            const d = await apiReq(`/videos/${id}`);
+            if(d && d.relatedVideos) render(d.relatedVideos);
+        }
+    </script>
+</body>
+</html>

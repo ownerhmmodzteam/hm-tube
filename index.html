@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HM TV PREMIUM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --accent: #ff0000; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: -apple-system, sans-serif; }
+        
+        .bg-wrapper { position: fixed; inset: 0; z-index: 1; }
+        .bg-image { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.4) saturate(1.1); transform: scale(1.1); transition: transform 10s ease-out; }
+        .bg-image.zoom-active { transform: scale(1.15); }
+        .bg-overlay { position: absolute; inset: 0; background: radial-gradient(circle at center, transparent, rgba(0,0,0,1)); }
+
+        .splash-container { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease-in-out; }
+        .fade-out { opacity: 0; pointer-events: none; }
+
+        .glass-box { padding: 15px 30px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 40px rgba(0,0,0,0.6); position: relative; }
+        .glass-box::after { content: ''; position: absolute; inset: 0; background: var(--accent); filter: blur(40px); border-radius: 20px; opacity: 0.15; z-index: 1; }
+        
+        .logo-text { font-size: 30px; font-weight: 800; color: #fff; letter-spacing: 0px; text-shadow: 0 0 15px rgba(255,0,0,0.5); z-index: 10; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; white-space: nowrap; }
+
+        .loader-ios { margin-top: 40px; text-align: center; }
+        .spinner { width: 22px; height: 22px; border: 2.5px solid rgba(255,255,255,0.08); border-top-color: rgba(255,255,255,0.8); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 15px; }
+        .status-text { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: rgba(255,255,255,0.5); font-weight: 500; margin-bottom: 6px; }
+        .desc-text { font-size: 8px; color: rgba(255,255,255,0.2); letter-spacing: 0.5px; font-weight: 400; max-width: 250px; line-height: 1.4; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #main-app { position: fixed; inset: 0; z-index: 200; opacity: 0; visibility: hidden; transition: opacity 1s ease; background: #000; }
+        #main-app.active { opacity: 1; visibility: visible; }
+        iframe { width: 100%; height: 100%; border: none; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-wrapper">
+        <img src="https://files.catbox.moe/fe7xvy.jpg" class="bg-image" id="bgImg">
+        <div class="bg-overlay"></div>
+    </div>
+
+    <div class="splash-container" id="splash">
+        <div class="glass-box">
+            <span class="logo-text">HM TUBE</span>
+        </div>
+        
+        <div class="loader-ios">
+            <div class="spinner"></div>
+            <div class="status-text" id="status">CONNECTING</div>
+            <div class="desc-text">HM TUBE V1.0 • SYNCING CLOUD DATABASE</div>
+        </div>
+
+        <div class="absolute bottom-12 text-[7px] tracking-[4px] text-white/15 uppercase font-bold">
+            HM MODZ TEAM • 2026
+        </div>
+    </div>
+
+    <div id="main-app">
+        <iframe src="base.html"></iframe>
+    </div>
+
+    <script>
+        const splash = document.getElementById('splash');
+        const main = document.getElementById('main-app');
+        const bg = document.getElementById('bgImg');
+        const status = document.getElementById('status');
+        const logs = ["CONNECTING", "CLOUD DB", "LOADING", "READY"];
+
+        window.onload = () => {
+            setTimeout(() => bg.classList.add('zoom-active'), 100);
+            
+            let i = 0;
+            const logInterval = setInterval(() => {
+                if(i < logs.length) {
+                    status.innerText = logs[i];
+                    i++;
+                } else {
+                    clearInterval(logInterval);
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                splash.classList.add('fade-out');
+                setTimeout(() => {
+                    main.classList.add('active');
+                }, 500);
+            }, 5500);
+        };
+    </script>
+</body>
+</html>
