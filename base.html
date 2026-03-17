@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HM TUBE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg: #000; --accent: #a855f7; --ios-glass: rgba(18, 18, 18, 0.85); --ios-alert-bg: rgba(35, 35, 35, 0.85); }
+        body { background: var(--bg); color: white; font-family: -apple-system, system-ui, sans-serif; margin: 0; user-select: none; overflow-x: hidden; }
+        
+        .ios-nav { position: sticky; top: 0; background: var(--ios-glass); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 12px 20px; z-index: 3000; border-bottom: 0.5px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; }
+        .hm-logo-text { font-size: 20px; font-weight: 900; font-style: italic; color: #fff; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+        .hm-logo-text span { color: var(--accent); }
+
+        .search-pill { background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px 16px; display: flex; align-items: center; flex: 1; margin: 0 15px; border: 1px solid transparent; }
+        .search-pill input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 15px; }
+
+        .avatar-donut { width: 40px; height: 40px; border-radius: 50%; background: #2b2c30; position: relative; cursor: pointer; }
+        .avatar-donut::before { content: ''; width: 14px; height: 14px; background: #54555a; border-radius: 50%; position: absolute; top: 8px; left: 12px; }
+        .avatar-donut::after { content: ''; width: 24px; height: 12px; background: #54555a; border-radius: 12px 12px 0 0; position: absolute; bottom: 6px; left: 7px; }
+
+        #ios-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 6000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 20px; }
+        .ios-alert { background: var(--ios-alert-bg); width: 100%; max-width: 280px; border-radius: 14px; overflow: hidden; backdrop-filter: blur(25px); border: 0.5px solid rgba(255,255,255,0.15); animation: alertScale 0.2s ease; }
+        @keyframes alertScale { from { transform: scale(1.1); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .info-list { text-align: left; font-size: 13px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; }
+        .info-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+        .info-value { color: var(--accent); font-weight: 600; }
+
+        #shorts-container { position: fixed; inset: 0; background: #000; z-index: 5000; display: none; overflow-y: scroll; snap-type: y mandatory; }
+        .short-slide { width: 100vw; height: 100vh; snap-align: start; position: relative; display: flex; align-items: center; background: #000; }
+        .short-slide iframe { width: 100%; height: 100%; pointer-events: none; }
+        .close-shorts { position: fixed; top: 40px; right: 20px; z-index: 5100; font-size: 26px; color: white; text-shadow: 0 0 10px #000; }
+
+        .v-card { margin-bottom: 24px; padding: 0 10px; }
+        .v-thumb { width: 100%; aspect-ratio: 16/9; border-radius: 20px; overflow: hidden; background: #111; position: relative; }
+        .v-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--ios-glass); backdrop-filter: blur(30px); display: flex; justify-content: space-around; padding: 12px 0 32px 0; border-top: 0.5px solid rgba(255,255,255,0.1); z-index: 3000; }
+        .tab-item { color: #8e8e93; text-align: center; }
+        .tab-item.active { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div id="ios-modal-overlay">
+        <div class="ios-alert">
+            <div class="p-5 text-center" id="modal-body"></div>
+            <button class="w-full p-3 border-t border-white/10 text-blue-500 font-semibold" onclick="closeModal()">Tutup</button>
+        </div>
+    </div>
+
+    <div id="shorts-container">
+        <div class="close-shorts" onclick="closeShorts()"><i class="fa-solid fa-circle-xmark"></i></div>
+    </div>
+
+    <nav class="ios-nav">
+        <div class="hm-logo-text">HM <span>TUBE</span></div>
+        <div class="search-pill">
+            <input type="text" id="query" placeholder="Search...." onkeyup="if(event.key==='Enter') search()">
+        </div>
+        <div class="avatar-donut" onclick="showProfile()"></div>
+    </nav>
+
+    <main class="p-5 pb-32">
+        <h2 id="section-title" class="text-2xl font-black mb-6">Untuk Anda</h2>
+        <div id="feed" class="flex flex-col"></div>
+    </main>
+
+    <div class="tab-bar">
+        <div class="tab-item active" onclick="loadTrending()"><i class="fa-solid fa-house"></i><span class="text-[10px] block">Home</span></div>
+        <div class="tab-item" onclick="showHistory()"><i class="fa-solid fa-clock"></i><span class="text-[10px] block">History</span></div>
+        <div class="tab-item" onclick="loadShorts()"><i class="fa-solid fa-bolt"></i><span class="text-[10px] block">Shorts</span></div>
+        <div class="tab-item" onclick="showProfile()"><i class="fa-solid fa-user"></i><span class="text-[10px] block">Profile</span></div>
+    </div>
+
+    <script>
+        const nodes = ['https://iv.melmac.space', 'https://invidious.lunar.icu', 'https://inv.tux.rs'];
+        let activeNode = nodes[0];
+
+        function openModal(html) {
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('ios-modal-overlay').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('ios-modal-overlay').style.display = 'none'; }
+
+        function showProfile() {
+            openModal(`
+                <div class="text-lg font-bold mb-3">Informasi Sistem</div>
+                <div class="info-list">
+                    <div class="info-item"><span>Nomor Build</span><span class="info-value">V1.0.0</span></div>
+                    <div class="info-item"><span>Owner</span><span class="info-value">Muhammad Raihan Musalah</span></div>
+                    <div class="info-item"><span>Teamed</span><span class="info-value">HM MODZ TEAM</span></div>
+                </div>
+            `);
+        }
+
+        async function apiReq(p) {
+            for (let n of nodes) {
+                try {
+                    const r = await fetch(`${n}/api/v1${p}`, { signal: AbortSignal.timeout(4000) });
+                    if (r.ok) { activeNode = n; return await r.json(); }
+                } catch (e) { continue; }
+            }
+            return null;
+        }
+
+        function saveToHistory(v) {
+            let h = JSON.parse(localStorage.getItem('hm_history') || '[]');
+            h = [v, ...h.filter(x => x.videoId !== v.videoId)].slice(0, 40);
+            localStorage.setItem('hm_history', JSON.stringify(h));
+        }
+
+        function showHistory() {
+            const h = JSON.parse(localStorage.getItem('hm_history') || '[]');
+            document.getElementById('section-title').innerText = "Riwayat Tontonan";
+            updateTab(1);
+            render(h);
+        }
+
+        function render(items) {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = items.length ? '' : '<p class="text-center opacity-50 py-10">Belum ada riwayat.</p>';
+            items.forEach(v => {
+                const card = document.createElement('div');
+                card.className = 'v-card';
+                card.onclick = () => {
+                    saveToHistory(v);
+                    window.open(`https://www.youtube.com/watch?v=${v.videoId}`, '_blank');
+                };
+                card.innerHTML = `
+                    <div class="v-thumb"><img src="${v.videoThumbnails ? v.videoThumbnails[0].url : `https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`}"></div>
+                    <div class="mt-3">
+                        <p class="font-bold text-sm line-clamp-2">${v.title}</p>
+                        <p class="text-[11px] opacity-50">${v.author}</p>
+                    </div>
+                `;
+                feed.appendChild(card);
+            });
+        }
+
+        async function loadShorts() {
+            const container = document.getElementById('shorts-container');
+            container.style.display = 'block';
+            const data = await apiReq('/search?q=shorts+trending&type=video');
+            if(data) {
+                data.forEach(v => {
+                    const slide = document.createElement('div');
+                    slide.className = 'short-slide';
+                    slide.innerHTML = `<iframe src="https://www.youtube.com/embed/${v.videoId}?autoplay=1&controls=0&loop=1"></iframe>`;
+                    container.appendChild(slide);
+                });
+            }
+        }
+
+        function closeShorts() {
+            document.getElementById('shorts-container').style.display = 'none';
+            document.getElementById('shorts-container').innerHTML = '<div class="close-shorts" onclick="closeShorts()"><i class="fa-solid fa-circle-xmark"></i></div>';
+        }
+
+        async function loadTrending() {
+            document.getElementById('section-title').innerText = "Untuk Anda";
+            updateTab(0);
+            const data = await apiReq('/trending?region=ID');
+            if(data) render(data);
+        }
+
+        function updateTab(i) {
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-item')[i].classList.add('active');
+        }
+
+        window.onload = loadTrending;
+    </script>
+</body>
+</html>
