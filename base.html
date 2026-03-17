@@ -8,34 +8,37 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --bg: #000; --accent: #a855f7; --ios-glass: rgba(18, 18, 18, 0.85); }
-        body { background: var(--bg); color: white; font-family: -apple-system, system-ui, sans-serif; margin: 0; overflow-x: hidden; }
+        body { background: var(--bg); color: white; font-family: -apple-system, system-ui, sans-serif; margin: 0; user-select: none; overflow-x: hidden; }
         
         .ios-nav { position: sticky; top: 0; background: var(--ios-glass); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 12px 20px; z-index: 9999; border-bottom: 0.5px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; }
-        .hm-logo-text { font-size: 20px; font-weight: 900; font-style: italic; color: #fff; }
+        .hm-logo-text { font-size: 20px; font-weight: 900; font-style: italic; color: #fff; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
         .hm-logo-text span { color: var(--accent); }
 
-        .search-pill { background: rgba(255,255,255,0.08); border-radius: 14px; padding: 8px 16px; display: flex; align-items: center; flex: 1; margin: 0 15px; }
-        .search-pill input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 14px; }
+        .search-pill { background: rgba(255,255,255,0.08); border-radius: 14px; padding: 10px 16px; display: flex; align-items: center; flex: 1; margin: 0 15px; }
+        .search-pill input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 15px; }
 
-        #video-player-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; display: none; overflow-y: auto; padding-top: 60px; }
-        .player-wrapper { width: 100%; aspect-ratio: 16/9; background: #111; }
-        .player-wrapper iframe { width: 100%; height: 100%; border: none; }
+        .avatar-donut { width: 40px; height: 40px; border-radius: 50%; background: #2b2c30; position: relative; cursor: pointer; }
+        .avatar-donut::before { content: ''; width: 14px; height: 14px; background: #54555a; border-radius: 50%; position: absolute; top: 8px; left: 12px; }
+        .avatar-donut::after { content: ''; width: 24px; height: 12px; background: #54555a; border-radius: 12px 12px 0 0; position: absolute; bottom: 6px; left: 7px; }
 
-        #ios-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
-        .ios-alert { background: rgba(30, 30, 30, 0.7); width: 280px; border-radius: 20px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; animation: alertScale 0.2s ease; }
+        #video-player-layer { position: fixed; inset: 0; background: #000; z-index: 9000; display: none; overflow-y: auto; padding-top: 20px; }
+        .player-box { width: 100%; aspect-ratio: 16/9; background: #111; }
+        .player-box iframe { width: 100%; height: 100%; border: none; }
+
+        #ios-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
+        .ios-alert { background: rgba(30, 30, 30, 0.75); width: 280px; border-radius: 20px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; animation: alertScale 0.2s ease; }
         @keyframes alertScale { from { transform: scale(1.1); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .info-list { padding: 0 15px 15px 15px; }
-        .info-box { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px; }
+        .info-box { background: rgba(255,255,255,0.05); border-radius: 12px; margin: 15px; padding: 10px; text-align: left; }
         .info-item { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
-        .info-value { color: #a855f7; font-weight: 600; }
+        .info-value { color: var(--accent); font-weight: 600; }
         .modal-btn { width: 100%; padding: 14px; background: transparent; border: none; border-top: 0.5px solid rgba(255,255,255,0.1); color: #0A84FF; font-size: 17px; font-weight: 600; }
 
-        .v-card { margin-bottom: 20px; padding: 0 10px; }
-        .v-thumb { width: 100%; aspect-ratio: 16/9; border-radius: 15px; overflow: hidden; background: #111; }
+        .v-card { margin-bottom: 24px; padding: 0 10px; cursor: pointer; }
+        .v-thumb { width: 100%; aspect-ratio: 16/9; border-radius: 20px; overflow: hidden; background: #111; }
         .v-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-        .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--ios-glass); backdrop-filter: blur(30px); display: flex; justify-content: space-around; padding: 12px 0 30px 0; border-top: 0.5px solid rgba(255,255,255,0.1); z-index: 9999; }
-        .tab-item { color: #8e8e93; font-size: 20px; }
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--ios-glass); backdrop-filter: blur(30px); display: flex; justify-content: space-around; padding: 12px 0 32px 0; border-top: 0.5px solid rgba(255,255,255,0.1); z-index: 3000; }
+        .tab-item { color: #8e8e93; text-align: center; }
         .tab-item.active { color: var(--accent); }
     </style>
 </head>
@@ -45,29 +48,30 @@
         <div id="modal-content"></div>
     </div>
 
-    <nav class="ios-nav">
-        <div class="hm-logo-text">HM <span>TUBE</span></div>
-        <div class="search-pill">
-            <input type="text" id="query" placeholder="Search...">
-        </div>
-        <div class="w-8 h-8 rounded-full bg-purple-500" onclick="showProfile()"></div>
-    </nav>
-
     <div id="video-player-layer">
-        <div class="p-3 flex items-center gap-3 bg-black/50" onclick="closePlayer()">
+        <div class="p-4 flex items-center gap-3" onclick="closePlayer()">
             <i class="fa-solid fa-chevron-left"></i> <span>Kembali</span>
         </div>
-        <div class="player-wrapper" id="player-target"></div>
+        <div id="player-target" class="player-box"></div>
         <div class="p-5">
             <h3 id="playing-title" class="font-bold text-lg"></h3>
             <p id="playing-author" class="text-sm opacity-50 mb-5"></p>
+            <hr class="border-white/10 mb-5">
             <div id="related-feed"></div>
         </div>
     </div>
 
-    <main class="p-4 pb-32">
-        <h2 id="section-title" class="text-xl font-bold mb-5">Untuk Tuan</h2>
-        <div id="feed" class="grid grid-cols-1 gap-4"></div>
+    <nav class="ios-nav">
+        <div class="hm-logo-text">HM <span>TUBE</span></div>
+        <div class="search-pill">
+            <input type="text" id="query" placeholder="Cari di HM Tube...">
+        </div>
+        <div class="avatar-donut" onclick="showProfile()"></div>
+    </nav>
+
+    <main class="p-5 pb-32">
+        <h2 id="section-title" class="text-2xl font-black mb-6">Video Populer</h2>
+        <div id="feed" class="flex flex-col"></div>
     </main>
 
     <div class="tab-bar">
@@ -77,18 +81,16 @@
 
     <script>
         const nodes = ['https://iv.melmac.space', 'https://invidious.lunar.icu'];
-        let currentVideoList = [];
+        let currentData = [];
 
         function showProfile() {
             document.getElementById('modal-content').innerHTML = `
                 <div class="ios-alert">
                     <div class="p-5 font-bold">Informasi Sistem</div>
-                    <div class="info-list">
-                        <div class="info-box">
-                            <div class="info-item"><span>Nomor Build</span><span class="info-value">V1.0.0</span></div>
-                            <div class="info-item"><span>Owner</span><span class="info-value">Muhammad Raihan Musalah</span></div>
-                            <div class="info-item" style="border:none"><span>Teamed</span><span class="info-value">HM MODZ TEAM</span></div>
-                        </div>
+                    <div class="info-box">
+                        <div class="info-item"><span>Nomor Build</span><span class="info-value">V1.0.0</span></div>
+                        <div class="info-item"><span>Owner</span><span class="info-value">Muhammad Raihan Musalah</span></div>
+                        <div class="info-item" style="border:none"><span>Teamed</span><span class="info-value">HM MODZ TEAM</span></div>
                     </div>
                     <button class="modal-btn" onclick="closeModal()">Tutup</button>
                 </div>
@@ -98,12 +100,14 @@
 
         function closeModal() { document.getElementById('ios-modal-overlay').style.display = 'none'; }
 
-        async function playVideo(videoId, title, author) {
-            document.getElementById('playing-title').innerText = title;
-            document.getElementById('playing-author').innerText = author;
-            document.getElementById('player-target').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`;
+        async function playVideo(v) {
+            document.getElementById('playing-title').innerText = v.title;
+            document.getElementById('playing-author').innerText = v.author;
+            document.getElementById('player-target').innerHTML = `<iframe src="https://www.youtube.com/embed/${v.videoId}?autoplay=1&modestbranding=1" allowfullscreen></iframe>`;
             document.getElementById('video-player-layer').style.display = 'block';
-            renderRelated();
+            
+            const related = [...currentData].sort(() => 0.5 - Math.random()).slice(0, 5);
+            render(related, 'related-feed');
             window.history.pushState({playing: true}, "");
         }
 
@@ -124,23 +128,22 @@
             items.forEach(v => {
                 const card = document.createElement('div');
                 card.className = 'v-card';
-                card.onclick = () => playVideo(v.videoId, v.title, v.author);
+                card.onclick = () => playVideo(v);
                 card.innerHTML = `
                     <div class="v-thumb"><img src="https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg"></div>
-                    <div class="mt-2 font-bold text-sm line-clamp-2">${v.title}</div>
+                    <div class="mt-3">
+                        <p class="font-bold text-sm line-clamp-2">${v.title}</p>
+                        <p class="text-[11px] opacity-50">${v.author}</p>
+                    </div>
                 `;
                 target.appendChild(card);
             });
         }
 
-        function renderRelated() {
-            render(currentVideoList.sort(() => 0.5 - Math.random()).slice(0, 5), 'related-feed');
-        }
-
         async function loadTrending() {
             const r = await fetch(`${nodes[0]}/api/v1/trending?region=ID`);
-            currentVideoList = await r.json();
-            render(currentVideoList);
+            currentData = await r.json();
+            render(currentData);
         }
 
         window.onload = loadTrending;
