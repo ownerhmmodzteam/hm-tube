@@ -87,7 +87,7 @@
         <div class="avatar-donut" onclick="showProfile()"></div>
     </nav>
     <main class="p-5 pb-40">
-        <h2 id="section-title" class="text-2xl font-black mb-6">Untuk Tuan</h2>
+        <h2 id="section-title" class="text-2xl font-black mb-6">Untuk Anda</h2>
         <div id="feed" class="flex flex-col"></div>
     </main>
     <div class="tab-bar">
@@ -121,7 +121,7 @@
                 const data = await r.json();
                 render(data);
                 document.activeElement.blur();
-            } catch (e) { document.getElementById('feed').innerHTML = '<p class="text-center py-20">Gagal, Tuan.</p>'; }
+            } catch (e) { document.getElementById('feed').innerHTML = '<p class="text-center py-20">Server Offline.</p>'; }
         }
         function setSpeed(s) {
             if(player && player.setPlaybackRate) {
@@ -196,7 +196,7 @@
             });
         }
         async function loadTrending() {
-            document.getElementById('section-title').innerText = "Untuk Tuan";
+            document.getElementById('section-title').innerText = "Untuk Anda";
             updateTab(0);
             try {
                 const r = await fetch(`${nodes[0]}/api/v1/trending?region=ID`);
